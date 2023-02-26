@@ -9,6 +9,9 @@ cat << EOM >> /etc/pacman.conf
 Include = /etc/pacman.d/mirrorlist
 EOM
 
+# Use all available threads to build a package
+sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
+
 pacman -Syu --noconfirm --needed base-devel
 
 # Makepkg does not allow running as root
