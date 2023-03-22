@@ -8,7 +8,7 @@ inputs:
   pkgdir:
     description: "Relative path to directory containing the PKGBUILD file."
     required: false
-    default: "../../.."
+    default: "."
   aurDeps:
     description: "Support AUR dependencies if nonempty."
     required: false
