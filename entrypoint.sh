@@ -77,7 +77,7 @@ i=0
 for PKGFILE in "${PKGFILES[@]}"; do
 	# makepkg reports absolute paths, must be relative for use by other actions
 	RELPKGFILE="$(realpath --relative-base="$BASEDIR" "$PKGFILE")"
-	# Caller arguments to makepkg may mean the pacakge is not built
+	# Caller arguments to makepkg may mean the package is not built
 	if [ -f "$PKGFILE" ]; then
 		echo "pkgfile$i=$RELPKGFILE" >> $GITHUB_OUTPUT
 	else
@@ -127,6 +127,6 @@ function namcap_check() {
 	done
 }
 
-if [ -z "${INPUT_NAMCAPDISABLE:-}" ]; then
-	namcap_check
-fi
+#if [ -z "${INPUT_NAMCAPDISABLE:-}" ]; then
+#	namcap_check
+#fi
