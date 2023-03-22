@@ -8,7 +8,7 @@ inputs:
   pkgdir:
     description: "Relative path to directory containing the PKGBUILD file."
     required: false
-    default: "."
+    default: "../../.."
   aurDeps:
     description: "Support AUR dependencies if nonempty."
     required: false
@@ -16,7 +16,7 @@ inputs:
   namcapDisable:
     description: "Disable namcap checks if nonempty."
     required: false
-    default: ""
+    default: "disabled"
   namcapRules:
     description: "A comma-separated list of rules for namcap to run."
     required: false
