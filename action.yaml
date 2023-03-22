@@ -16,7 +16,7 @@ inputs:
   namcapDisable:
     description: "Disable namcap checks if nonempty."
     required: false
-    default: ""
+    default: "disabled"
   namcapRules:
     description: "A comma-separated list of rules for namcap to run."
     required: false
