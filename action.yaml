@@ -16,7 +16,7 @@ inputs:
   namcapDisable:
     description: "Disable namcap checks if nonempty."
     required: false
-    default: "disabled"
+    default: ""
   namcapRules:
     description: "A comma-separated list of rules for namcap to run."
     required: false
@@ -28,7 +28,7 @@ inputs:
   makepkgArgs:
     description: "Additional arguments to pass to makepkg."
     required: false
-    default: ""
+    default: "--skipinteg"
   envvars:
     description: "Export environment variables for makepkg"
     required: false
