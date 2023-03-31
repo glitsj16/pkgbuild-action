@@ -12,7 +12,7 @@ EOM
 # Use all available threads to build a package
 sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
 
-pacman -Syu --noconfirm --needed base-devel
+pacman -Syu --noconfirm --needed base-devel ccache
 
 # Makepkg does not allow running as root
 # Create a new user `builder`
