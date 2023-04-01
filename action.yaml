@@ -12,7 +12,7 @@ inputs:
   makepkgArgs:
     description: "Additional arguments to pass to makepkg."
     required: false
-    default: "--skipinteg --syncdeps --rmdeps"
+    default: "--skipinteg"
   envvars:
     description: "Export environment variables for makepkg"
     required: false
