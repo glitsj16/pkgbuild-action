@@ -38,11 +38,6 @@ chown -R runner .
 # shellcheck disable=SC2086
 
 # ccache
-export CCACHE_DIR="/home/runner/work/linux-ck/linux-ck/.ccache"
-export CCACHE_MAXSIZE="500MB"
-export CCACHE_NOHASHDIR="true"
-export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
-export CCACHE_TEMPDIR="/tmp/ccache"
 export PATH="/usr/lib/ccache/bin:$PATH"
 
 if [ -n "${INPUT_ENVVARS:-}" ]; then
