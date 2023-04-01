@@ -18,10 +18,10 @@ pacman -Syu --noconfirm --needed base-devel ccache
 # Create a new user `builder`
 # `builder` needs to have a home directory because some PKGBUILDs will try to
 # write to it (e.g. for cache)
-useradd builder -m
+useradd runner -m
 # When installing dependencies, makepkg will use sudo
 # Give user `builder` passwordless sudo access
-echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+echo "runner ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Give all users (particularly builder) full access to these files
 chmod -R a+rw .
@@ -31,7 +31,7 @@ cd "${INPUT_PKGDIR:-.}"
 
 # Assume that if .SRCINFO is missing then it is generated elsewhere.
 # AUR checks that .SRCINFO exists so a missing file can't go unnoticed.
-if [ -f .SRCINFO ] && ! sudo -u builder makepkg --printsrcinfo | diff -d -I '^#' - .SRCINFO; then
+if [ -f .SRCINFO ] && ! sudo -u runner makepkg --printsrcinfo | diff -d -I '^#' - .SRCINFO; then
 	echo "::error file=$FILE,line=$LINENO::Mismatched .SRCINFO. Update with: makepkg --printsrcinfo > .SRCINFO"
 	exit 1
 fi
@@ -43,42 +43,33 @@ if [ -n "${INPUT_AURDEPS:-}" ]; then
 	git clone https://aur.archlinux.org/yay-bin.git /tmp/yay
 	pushd /tmp/yay
 	chmod -R a+rw .
-	sudo -H -u builder makepkg --syncdeps --install --noconfirm
+	sudo -H -u runner makepkg --syncdeps --install --noconfirm
 	popd
 
 	# Extract dependencies from .SRCINFO (depends or depends_x86_64) and install
 	mapfile -t PKGDEPS < \
 		<(sed -n -e 's/^[[:space:]]*\(make\)\?depends\(_x86_64\)\? = \([[:alnum:][:punct:]]*\)[[:space:]]*$/\3/p' .SRCINFO)
-	sudo -H -u builder yay --sync --noconfirm "${PKGDEPS[@]}"
+	sudo -H -u runner yay --sync --noconfirm "${PKGDEPS[@]}"
 fi
 
 # Make the builder user the owner of these files
 # Without this, (e.g. only having every user have read/write access to the files),
 # makepkg will try to change the permissions of the files itself which will fail since it does not own the files/have permission
 # we can't do this earlier as it will change files that are for github actions, which results in warnings in github actions logs.
-chown -R builder .
-
-# Export ccache environment variables
-export CCACHE_BASEDIR="/home/builder"
-export CCACHE_COMPRESS="true"
-export CCACHE_COMPRESSLEVEL="6"
-export CCACHE_DIR="${CCACHE_BASEDIR}/.ccache"
-export CCACHE_MAXSIZE="2G"
-export CCACHE_NOHASHDIR="true"
-export CCACHE_SLOPPINESS="file_macro,time_macros"
+chown -R runner .
 
 # Build packages
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
 # shellcheck disable=SC2086
 
 if [ -n "${INPUT_ENVVARS:-}" ]; then
-  sudo -H -u builder ${INPUT_ENVVARS:-} makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
+  sudo -H -u runner ${INPUT_ENVVARS:-} makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
 else
-  sudo -H -u builder makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
+  sudo -H -u runner makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
 fi
 
 # Get array of packages to be built
-mapfile -t PKGFILES < <( sudo -u builder makepkg --packagelist )
+mapfile -t PKGFILES < <( sudo -u runner makepkg --packagelist )
 echo "Package(s): ${PKGFILES[*]}"
 
 # Report built package archives
