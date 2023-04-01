@@ -6,8 +6,11 @@ FILE="$(basename "$0")"
 # Use all available threads to build a package
 sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
 
-# install base-devel
-pacman -Syu --noconfirm --needed base-devel
+# Use ccache
+sed -i 's/\!ccache/ccache/' /etc/makepkg.conf
+
+# install base-devel + ccache
+pacman -Syu --noconfirm --needed base-devel ccache
 
 # Makepkg does not allow running as root
 # Create a new user `builder`
@@ -29,6 +32,14 @@ cd "${INPUT_PKGDIR:-.}"
 # makepkg will try to change the permissions of the files itself which will fail since it does not own the files/have permission
 # we can't do this earlier as it will change files that are for github actions, which results in warnings in github actions logs.
 chown -R builder .
+
+# ccache
+export CCACHE_DIR="/home/builder/.ccache"
+export CCACHE_MAXSIZE="500MB"
+export CCACHE_NOHASHDIR="true"
+export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
+export CCACHE_TEMPDIR="/tmp/ccache"
+export PATH="/usr/lib/ccache/bin/:$PATH"
 
 # Build packages
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
