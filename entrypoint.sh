@@ -6,20 +6,17 @@ FILE="$(basename "$0")"
 # Use all available threads to build a package
 sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
 
-# Use ccache to build a package
-sed -i 's/\!ccache/ccache/' /etc/makepkg.conf
-
-# install base-devel and ccache
-pacman -Syu --noconfirm --needed base-devel ccache
+# install base-devel
+pacman -Syu --noconfirm --needed base-devel
 
 # Makepkg does not allow running as root
 # Create a new user `builder`
 # `builder` needs to have a home directory because some PKGBUILDs will try to
 # write to it (e.g. for cache)
-useradd runner -m
+useradd builder -m
 # When installing dependencies, makepkg will use sudo
 # Give user `builder` passwordless sudo access
-echo "runner ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Give all users (particularly builder) full access to these files
 chmod -R a+rw .
@@ -31,23 +28,20 @@ cd "${INPUT_PKGDIR:-.}"
 # Without this, (e.g. only having every user have read/write access to the files),
 # makepkg will try to change the permissions of the files itself which will fail since it does not own the files/have permission
 # we can't do this earlier as it will change files that are for github actions, which results in warnings in github actions logs.
-chown -R runner .
+chown -R builder .
 
 # Build packages
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
 # shellcheck disable=SC2086
 
-# ccache
-export PATH="/usr/lib/ccache/bin:$PATH"
-
 if [ -n "${INPUT_ENVVARS:-}" ]; then
-  sudo -H -u runner ${INPUT_ENVVARS:-} makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
+  sudo -H -u builder ${INPUT_ENVVARS:-} makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
 else
-  sudo -H -u runner makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
+  sudo -H -u builder makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
 fi
 
 # Get array of packages to be built
-mapfile -t PKGFILES < <( sudo -u runner makepkg --packagelist )
+mapfile -t PKGFILES < <( sudo -u builder makepkg --packagelist )
 echo "Package(s): ${PKGFILES[*]}"
 
 # Report built package archives
