@@ -3,15 +3,13 @@ set -euo pipefail
 
 FILE="$(basename "$0")"
 
-# Enable the multilib repository
-cat << EOM >> /etc/pacman.conf
-[multilib]
-Include = /etc/pacman.d/mirrorlist
-EOM
-
 # Use all available threads to build a package
 sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
 
+# Use ccache to build a package
+sed -i 's/\!ccache/ccache/' /etc/makepkg.conf
+
+# install base-devel and ccache
 pacman -Syu --noconfirm --needed base-devel ccache
 
 # Makepkg does not allow running as root
@@ -28,29 +26,6 @@ chmod -R a+rw .
 
 BASEDIR="$PWD"
 cd "${INPUT_PKGDIR:-.}"
-
-# Assume that if .SRCINFO is missing then it is generated elsewhere.
-# AUR checks that .SRCINFO exists so a missing file can't go unnoticed.
-if [ -f .SRCINFO ] && ! sudo -u runner makepkg --printsrcinfo | diff -d -I '^#' - .SRCINFO; then
-	echo "::error file=$FILE,line=$LINENO::Mismatched .SRCINFO. Update with: makepkg --printsrcinfo > .SRCINFO"
-	exit 1
-fi
-
-# Optionally install dependencies from AUR
-if [ -n "${INPUT_AURDEPS:-}" ]; then
-	# First install yay
-	pacman -S --noconfirm --needed git
-	git clone https://aur.archlinux.org/yay-bin.git /tmp/yay
-	pushd /tmp/yay
-	chmod -R a+rw .
-	sudo -H -u runner makepkg --syncdeps --install --noconfirm
-	popd
-
-	# Extract dependencies from .SRCINFO (depends or depends_x86_64) and install
-	mapfile -t PKGDEPS < \
-		<(sed -n -e 's/^[[:space:]]*\(make\)\?depends\(_x86_64\)\? = \([[:alnum:][:punct:]]*\)[[:space:]]*$/\3/p' .SRCINFO)
-	sudo -H -u runner yay --sync --noconfirm "${PKGDEPS[@]}"
-fi
 
 # Make the builder user the owner of these files
 # Without this, (e.g. only having every user have read/write access to the files),
@@ -85,48 +60,3 @@ for PKGFILE in "${PKGFILES[@]}"; do
 	fi
 	(( ++i ))
 done
-
-function prepend () {
-	# Prepend the argument to each input line
-	while read -r line; do
-		echo "$1$line"
-	done
-}
-
-function namcap_check() {
-	# Run namcap checks
-	# Installing namcap after building so that makepkg happens on a minimal
-	# install where any missing dependencies can be caught.
-	pacman -S --noconfirm --needed namcap
-
-	NAMCAP_ARGS=()
-	if [ -n "${INPUT_NAMCAPRULES:-}" ]; then
-		NAMCAP_ARGS+=( "-r" "${INPUT_NAMCAPRULES}" )
-	fi
-	if [ -n "${INPUT_NAMCAPEXCLUDERULES:-}" ]; then
-		NAMCAP_ARGS+=( "-e" "${INPUT_NAMCAPEXCLUDERULES}" )
-	fi
-
-	# For reasons that I don't understand, sudo is not resetting '$PATH'
-	# As a result, namcap finds program paths in /usr/sbin instead of /usr/bin
-	# which makes namcap fail to identify the packages that provide the
-	# program and so it emits spurious warnings.
-	# More details: https://bugs.archlinux.org/task/66430
-	#
-	# Work around this issue by putting bin ahead of sbin in $PATH
-	export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
-
-	namcap "${NAMCAP_ARGS[@]}" PKGBUILD \
-		| prepend "::warning file=$FILE,line=$LINENO::"
-	for PKGFILE in "${PKGFILES[@]}"; do
-		if [ -f "$PKGFILE" ]; then
-			RELPKGFILE="$(realpath --relative-base="$BASEDIR" "$PKGFILE")"
-			namcap "${NAMCAP_ARGS[@]}" "$PKGFILE" \
-				| prepend "::warning file=$FILE,line=$LINENO::$RELPKGFILE:"
-		fi
-	done
-}
-
-#if [ -z "${INPUT_NAMCAPDISABLE:-}" ]; then
-#	namcap_check
-#fi
