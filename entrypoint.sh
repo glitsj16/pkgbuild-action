@@ -37,6 +37,9 @@ chown -R runner .
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
 # shellcheck disable=SC2086
 
+# ccache
+export PATH="/usr/lib/ccache/bin:$PATH"
+
 if [ -n "${INPUT_ENVVARS:-}" ]; then
   sudo -H -u runner ${INPUT_ENVVARS:-} makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
 else
