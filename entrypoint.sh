@@ -58,6 +58,15 @@ fi
 # we can't do this earlier as it will change files that are for github actions, which results in warnings in github actions logs.
 chown -R builder .
 
+# Export ccache environment variables
+export CCACHE_BASEDIR="/home/builder"
+export CCACHE_COMPRESS="true"
+export CCACHE_COMPRESSLEVEL="6"
+export CCACHE_DIR="${CCACHE_BASEDIR}/.ccache"
+export CCACHE_MAXSIZE="2G"
+export CCACHE_NOHASHDIR="true"
+export CCACHE_SLOPPINESS="file_macro,time_macros"
+
 # Build packages
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
 # shellcheck disable=SC2086
