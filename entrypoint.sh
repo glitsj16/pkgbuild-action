@@ -8,6 +8,7 @@ sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.con
 
 # Use ccache
 sed -i 's/\!ccache/ccache/' /etc/makepkg.conf
+export PATH="/usr/lib/ccache/bin:$PATH"
 
 # Install base-devel + ccache
 pacman -Syu --noconfirm --needed base-devel ccache
@@ -39,7 +40,6 @@ export CCACHE_MAXSIZE="500MB"
 export CCACHE_NOHASHDIR="true"
 export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
 export CCACHE_TEMPDIR="/tmp/ccache"
-export PATH="/usr/lib/ccache/bin:PATH"
 
 # Build packages
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
