@@ -35,6 +35,7 @@ cd "${INPUT_PKGDIR:-.}"
 chown -R runner .
 
 # Configure ccache
+export CCACHE_DIR="/github/home/.cache/ccache"
 export CCACHE_MAXSIZE="500MB"
 export CCACHE_NOHASHDIR="true"
 export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
@@ -54,6 +55,7 @@ ccache -s
 echo
 echo "Reset ccache stats"
 ccache -z
+echo
 
 # Build packages
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
