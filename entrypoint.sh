@@ -35,7 +35,6 @@ cd "${INPUT_PKGDIR:-.}"
 chown -R runner .
 
 # Configure ccache
-export CCACHE_DIR="/home/runner/.ccache"
 export CCACHE_MAXSIZE="500MB"
 export CCACHE_NOHASHDIR="true"
 export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
