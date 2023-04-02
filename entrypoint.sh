@@ -40,18 +40,19 @@ export CCACHE_NOHASHDIR="true"
 export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
 export CCACHE_TEMPDIR="/tmp/ccache"
 
-# Print ccache configuration & stats
-{
-    echo
-    echo "ccache configuration:"
-    ccache -p
-    echo
-    echo "PRE-BUILD ccache stats:"
-    ccache -s
-    echo
-} >> $GITHUB_OUTPUT
+# Print ccache configuration
+echo
+echo "ccache configuration:"
+ccache -p
+
+# Print PRE-BUILD ccache stats
+echo
+echo "PRE-BUILD ccache stats:"
+ccache -s
 
 # Reset ccache stats
+echo
+echo "Reset ccache stats"
 ccache -z
 
 # Build packages
@@ -82,7 +83,7 @@ for PKGFILE in "${PKGFILES[@]}"; do
 	(( ++i ))
 done
 
-# Report ccache stats
+# Report POST-BUILD ccache stats
 echo
-echo "ccache stats:"
+echo "POST-BUILD ccache stats:"
 ccache -s
