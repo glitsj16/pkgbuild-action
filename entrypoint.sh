@@ -24,6 +24,7 @@ echo "runner ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Give all users (particularly builder) full access to these files
 chmod -R a+rw .
+chmod -R a+rw /github/home/.cache/ccache
 
 BASEDIR="$PWD"
 cd "${INPUT_PKGDIR:-.}"
@@ -33,6 +34,7 @@ cd "${INPUT_PKGDIR:-.}"
 # makepkg will try to change the permissions of the files itself which will fail since it does not own the files/have permission
 # we can't do this earlier as it will change files that are for github actions, which results in warnings in github actions logs.
 chown -R runner .
+chown -R runner /github/home/.cache/ccache
 
 # Configure ccache
 export CCACHE_DIR="/github/home/.cache/ccache"
