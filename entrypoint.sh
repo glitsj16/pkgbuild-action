@@ -40,6 +40,20 @@ export CCACHE_NOHASHDIR="true"
 export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
 export CCACHE_TEMPDIR="/tmp/ccache"
 
+# Print ccache configuration & stats
+{
+    echo
+    echo "ccache configuration:"
+    ccache -p
+    echo
+    echo "PRE-BUILD ccache stats:"
+    ccache -s
+    echo
+} >> $GITHUB_OUTPUT
+
+# Reset ccache stats
+ccache -z
+
 # Build packages
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
 # shellcheck disable=SC2086
@@ -67,3 +81,8 @@ for PKGFILE in "${PKGFILES[@]}"; do
 	fi
 	(( ++i ))
 done
+
+# Report ccache stats
+echo
+echo "ccache stats:"
+ccache -s
