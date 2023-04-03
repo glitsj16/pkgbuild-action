@@ -6,11 +6,8 @@ FILE="$(basename "$0")"
 # Use all available threads to build a package
 sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
 
-# Use ccache
-sed -i 's/\!ccache/ccache/' /etc/makepkg.conf
-
-# Install base-devel + ccache
-pacman -Syu --noconfirm --needed base-devel ccache
+# Install base-devel
+pacman -Syu --noconfirm --needed base-devel
 
 # Makepkg does not allow running as root
 # Create a new user `builder`
@@ -37,25 +34,6 @@ chown -R builder .
 # INPUT_MAKEPKGARGS is intentionally unquoted to allow arg splitting
 # shellcheck disable=SC2086
 
-if [ -x "/usr/bin/ccache" ]; then
-  # Configure ccache
-  export CCACHE_DIR="/home/builder/.ccache"
-  export CCACHE_MAXSIZE="500MB"
-  export CCACHE_NOHASHDIR="true"
-  export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
-  export CCACHE_TEMPDIR="/tmp/ccache"
-  export PATH="/usr/lib/ccache/bin:$PATH"
-  # Print ccache configuration
-  echo "Current ccache configuration:"
-  ccache -p
-  # Print ccache stats
-  echo "Current ccache stats:"
-  ccache -s
-  # Reset stats for this run
-  echo "Reset ccache stats:"
-  ccache -z
-fi
-
 if [ -n "${INPUT_ENVVARS:-}" ]; then
   sudo -H -u builder ${INPUT_ENVVARS:-} makepkg --syncdeps --noconfirm ${INPUT_MAKEPKGARGS:-}
 else
@@ -79,9 +57,3 @@ for PKGFILE in "${PKGFILES[@]}"; do
 	fi
 	(( ++i ))
 done
-
-# Report ccache stats from this run
-if [ -x "/usr/bin/ccache" ]; then
-  echo "Current ccache stats:"
-  ccache -s
-fi
