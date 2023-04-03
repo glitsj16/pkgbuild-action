@@ -6,12 +6,8 @@ FILE="$(basename "$0")"
 # Use all available threads to build a package
 sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
 
-# Install base-devel + sccache
-pacman -Syu --noconfirm --needed base-devel sccache
-
-# Configure sccache
-export SCCACHE_CACHE_SIZE="200MB"
-export SCCACHE_DIR="/home/builder/.sccache"
+# Install base-devel
+pacman -Syu --noconfirm --needed base-devel
 
 # Makepkg does not allow running as root
 # Create a new user `builder`
@@ -61,10 +57,3 @@ for PKGFILE in "${PKGFILES[@]}"; do
 	fi
 	(( ++i ))
 done
-
-# Show sccache hits
-if [ -x "/usr/bin/sccache" ]; then
-    echo
-    echo "sccache stats:"
-    sccache --show-stats
-fi
