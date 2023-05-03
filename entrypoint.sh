@@ -3,6 +3,9 @@ set -euo pipefail
 
 FILE="$(basename "$0")"
 
+# Activate testing repositories
+sed -i -e "s/#Include/Include/g" -e "s/#\[testing\]/\[testing\]/" -e "s/#\[community-testing\]/\[community-testing\]/" /etc/pacman.conf
+
 # Use all available threads to build a package
 sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc) -l$(nproc)"/g' /etc/makepkg.conf
 
